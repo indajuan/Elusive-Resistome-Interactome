@@ -522,8 +522,8 @@ function renderGeneClassesSection(el, habitat){
         q1: rows.map(r=>r?r.q25:null), median: rows.map(r=>r?r.median:null),
         q3: rows.map(r=>r?r.q75:null), lowerfence: rows.map(r=>r?r.w1:null),
         upperfence: rows.map(r=>r?r.w2:null),
-        marker:{color}, line:{color},
-        hovertemplate: (TOOL_LABEL[t]||t)+' — %{y}<br>Median: %{median:.1f}%<br>Q1: %{q1:.1f}% · Q3: %{q3:.1f}%<extra></extra>'
+        marker:{color}, line:{color}, hoveron:'boxes',
+        hovertemplate: 'Median: %{median:.1f}%<br>Q1: %{q1:.1f}% · Q3: %{q3:.1f}%<extra></extra>'
       };
     });
     Plotly.react(`${P}identity-by-class`, traces, {...PLOTLY_LAYOUT_BASE, boxmode:'group',
@@ -635,6 +635,10 @@ function renderGeneClassesSection(el, habitat){
            text: habitat
              ? "<ul><li>DeepARG classifies a large share of efflux pumps as 'multidrug' — a category the tool's own authors flag as a technical challenge requiring manual curation.</li><li>DeepARG classifies a large share of efflux pumps as \u201cunclassified\u201d.</li><li>There are significant difficulties in distinguishing between resistance-conferring pumps and those involved in general physiological transport (I will add citation).</li></ul>"
              : "<ul><li>DeepARG – 23,784 (58%) of the efflux pumps classified by the tool as 'multidrug', a category highlighted by the authors of the tool as an important technical challenge requiring manual curation.</li><li>DeepARG – 5,290 (13%) were labeled as \u201cunclassified\u201d.</li><li>There are significant difficulties in distinguishing between resistance-conferring pumps and those involved in general physiological transport (I will add citation).</li></ul>"},
+          {el: document.getElementById(`${P}card-classbar`),
+           text: habitat
+             ? "<ul><li>A large share of van genes reported by RGI are vanY — an accessory D,D-carboxypeptidase (not the core ligase) that only increases resistance once the ligase-driven cassette is already active; it's not itself sufficient for resistance.</li><li>A large share of van genes reported by RGI are vanW – an accessory gene of unknown function.</li><li>Most vanT hits are below 80% identity to the reference gene, consistent with many being ordinary alanine racemase (Alr), the essential housekeeping enzyme VanT evolved from, rather than true resistance genes.</li></ul>"
+             : "<ul><li>35% of van genes reported by RGI are vanY — an accessory D,D-carboxypeptidase (not the core ligase) that only increases resistance once the ligase-driven cassette is already active; it's not itself sufficient for resistance.</li><li>32% of van genes reported by RGI are vanW – an accessory gene of unknown function.</li><li>23% of van genes reported by RGI are vanT — 99% are below 80% identity, consistent with most being ordinary alanine racemase (Alr), the essential housekeeping enzyme VanT evolved from, rather than true resistance genes.</li></ul>"},
           {el: document.getElementById(`${P}card-prop`),
            text: "Same classes, but as a share of each pipeline's total calls — shows how the resistome \"mix\" shifts by pipeline."}
         ]);
@@ -783,7 +787,7 @@ function renderCSCSection(el, habitat){
         y: rows.map(d=>cleanLevel(d.new_level)),
         x: rows.map(d=>d.csc),
         text: rows.map(d=>TOOL_LABEL[d.tool_comp]||d.tool_comp),
-        boxpoints:'all', jitter:0.6, pointpos:0,
+        boxpoints:'all', jitter:0.6, pointpos:0, hoveron:'points',
         marker:{color: dotColors, size:6, opacity:0.9, line:{color:'#ffffff', width:0.5}},
         line:{color: refColor, width:1.5},
         fillcolor:'rgba(0,0,0,0.03)',
@@ -974,8 +978,8 @@ function renderAbundance(el, habitat){
         x:[TOOL_LABEL[t]||t],
         q1:[r?r.q25:null], median:[r?r.median:null], q3:[r?r.q75:null],
         lowerfence:[r?r.w1:null], upperfence:[r?r.w2:null],
-        marker:{color}, line:{color}, boxpoints:false,
-        hovertemplate: (TOOL_LABEL[t]||t)+'<br>Median: %{median:,.1f}<br>Q1: %{q1:,.1f} · Q3: %{q3:,.1f}<extra></extra>'
+        marker:{color}, line:{color}, boxpoints:false, hoveron:'boxes',
+        hovertemplate: 'Median: %{median:,.1f}<br>Q1: %{q1:,.1f} · Q3: %{q3:,.1f}<extra></extra>'
       };
     });
     return [
@@ -1061,8 +1065,8 @@ function renderAbundance(el, habitat){
           y:[TOOL_LABEL[t]||t],
           q1:[r?r.q25:null], median:[r?r.q50:null], q3:[r?r.q75:null],
           lowerfence:[r?r.w1:null], upperfence:[r?r.w2:null],
-          marker:{color}, line:{color},
-          hovertemplate: (TOOL_LABEL[t]||t)+'<br>Median: %{median:,.2f}<br>Q1: %{q1:,.2f} · Q3: %{q3:,.2f}<extra></extra>'
+          marker:{color}, line:{color}, hoveron:'boxes',
+          hovertemplate: 'Median: %{median:,.2f}<br>Q1: %{q1:,.2f} · Q3: %{q3:,.2f}<extra></extra>'
         });
       });
 
