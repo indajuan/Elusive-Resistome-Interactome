@@ -522,7 +522,8 @@ function renderGeneClassesSection(el, habitat){
         q1: rows.map(r=>r?r.q25:null), median: rows.map(r=>r?r.median:null),
         q3: rows.map(r=>r?r.q75:null), lowerfence: rows.map(r=>r?r.w1:null),
         upperfence: rows.map(r=>r?r.w2:null),
-        marker:{color}, line:{color}
+        marker:{color}, line:{color},
+        hovertemplate: (TOOL_LABEL[t]||t)+' — %{y}<br>Median: %{median:.1f}%<br>Q1: %{q1:.1f}% · Q3: %{q3:.1f}%<extra></extra>'
       };
     });
     Plotly.react(`${P}identity-by-class`, traces, {...PLOTLY_LAYOUT_BASE, boxmode:'group',
@@ -911,15 +912,17 @@ function renderAbundance(el, habitat){
       </div>
     </div>
 
-    <div class="card" id="ab-card-abundance">
-      <h3>Relative abundance per sample</h3>
-      <p class="desc">Box = interquartile range, whiskers extend to 1.5×IQR. Points are a random sample of individual metagenomes.</p>
-      <div id="ab-abundance-box" class="plotwrap"></div>
-    </div>
+    <div class="grid3">
+      <div class="card" id="ab-card-abundance">
+        <h3>Relative abundance per sample</h3>
+        <p class="desc">Box = interquartile range, whiskers extend to 1.5×IQR. Points are a random sample of individual metagenomes.</p>
+        <div id="ab-abundance-box" class="plotwrap"></div>
+      </div>
 
-    <div class="card" id="ab-card-richness">
-      <h3>Richness per sample</h3>
-      <div id="ab-richness-box" class="plotwrap"></div>
+      <div class="card" id="ab-card-richness">
+        <h3>Richness per sample</h3>
+        <div id="ab-richness-box" class="plotwrap"></div>
+      </div>
     </div>
 
     <div class="card" id="ab-card-classfacet">
@@ -971,7 +974,8 @@ function renderAbundance(el, habitat){
         x:[TOOL_LABEL[t]||t],
         q1:[r?r.q25:null], median:[r?r.median:null], q3:[r?r.q75:null],
         lowerfence:[r?r.w1:null], upperfence:[r?r.w2:null],
-        marker:{color}, line:{color}, boxpoints:false
+        marker:{color}, line:{color}, boxpoints:false,
+        hovertemplate: (TOOL_LABEL[t]||t)+'<br>Median: %{median:,.1f}<br>Q1: %{q1:,.1f} · Q3: %{q3:,.1f}<extra></extra>'
       };
     });
     return [
@@ -1058,7 +1062,7 @@ function renderAbundance(el, habitat){
           q1:[r?r.q25:null], median:[r?r.q50:null], q3:[r?r.q75:null],
           lowerfence:[r?r.w1:null], upperfence:[r?r.w2:null],
           marker:{color}, line:{color},
-          hovertemplate: (TOOL_LABEL[t]||t)+': %{x:,.2f}<extra></extra>'
+          hovertemplate: (TOOL_LABEL[t]||t)+'<br>Median: %{median:,.2f}<br>Q1: %{q1:,.2f} · Q3: %{q3:,.2f}<extra></extra>'
         });
       });
 

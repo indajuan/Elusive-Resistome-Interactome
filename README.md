@@ -22,9 +22,9 @@ not affiliated with the authors.
 This is a static site (HTML + JS + JSON data) — no build step, no server code.
 From inside this folder, start any local static file server, for example:
 
-​```bash
+```bash
 python3 -m http.server 8000
-​```
+```
 
 Then open **http://localhost:8000** in a browser.
 
@@ -41,9 +41,9 @@ The JSON files in `data/` are pre-built from the underlying `data.rds` (plus a
 habitat-occurrence CSV for the habitat-specific analysis). You only need to
 regenerate them if that source data changes:
 
-​```bash
+```bash
 python3 preprocess.py path/to/data.rds data path/to/habitat_occurrence.csv
-​```
+```
 
 (the third argument is optional — omit it to skip building the habitat-specific
 data). This uses `rds_parser.py`, a standalone RDS reader, so no R installation
