@@ -15,7 +15,23 @@ function cleanLevel(s){
   return s.replace(' beta-lactamase','').replace('rifampin inactivation enzyme','RIF-inact. enz.')
           .replace('MFS efflux pump','MFS efflux').replace('efflux pump','efflux')
           .replace('beta-lactam modulation resistance','beta-lactam mod.')
-          .replace('target-modifying enzyme','target-modif. enzyme');
+          .replace('target-modifying enzyme','target-modif.')
+          .replace('cell wall charge','cell wall')
+          .replace('variant or mutant','v/m')
+          .replace('permeability modulation','permeability')
+          .replace('antibiotic inactivation enzyme','Inactivation')
+          .replace('antibiotic sequestration','sequestration')
+          .replace('resistance by absence','by absence')
+          .replace('bifunctional aminoglycoside','bifunc. aminoglyc.')
+          .replace('host-dependent nutrient acquisition','nutrient acq.');
+}
+
+function wrapClassLabel(s){
+  const cleaned = cleanLevel(s);
+  if(!cleaned) return cleaned;
+  const words = cleaned.split(' ');
+  if(words.length <= 2) return cleaned;
+  return words.slice(0,2).join(' ') + '<br>' + words.slice(2).join(' ');
 }
 
 function chipToggle(container, options, selected, onChange, opts={}){
@@ -134,26 +150,38 @@ function renderIntroSection(el){
   el.innerHTML = `
     <h2>Antibiotic Resistance Gene Detection<br>on the Global Microbial Gene Catalog</h2>
     <p class="sub">Ten ARG-detection pipelines, run on the same underlying gene catalogue, disagree far more than you'd expect. This explorer lets you interact with the dataset behind
-      <em>"The elusive resistome: a global comparison reveals large discrepancies among detection pipelines"</em> (Inda-Díaz et al., bioRxiv 2026).</p>
+      <em><a href="https://www.biorxiv.org/content/10.64898/2026.05.11.724158v1" target="_blank">"The elusive resistome: a global comparison reveals large discrepancies among detection pipelines"</a></em> (Inda-Díaz et al., bioRxiv 2026).</p>
 
-    <div class="stat-row">
-      <div class="stat"><div class="n">278.8M</div><div class="l">unigenes screened (GMGC v1.0)</div></div>
-      <div class="stat"><div class="n teal">11,519</div><div class="l">metagenomic samples used for abundance &amp; richness</div></div>
-      <div class="stat"><div class="n amber">13</div><div class="l">distinct habitats represented</div></div>
-      <div class="stat"><div class="n">178,107</div><div class="l">unigenes flagged as ARG by ≥1 pipeline</div></div>
-    </div>
+    <div class="intro-layout">
+      <div class="intro-main">
+        <div class="stat-row">
+          <div class="stat"><div class="n">278.8M</div><div class="l">unigenes screened (<a href="https://gmgc.embl.de/" target="_blank">GMGC v1.0</a>)</div></div>
+          <div class="stat"><div class="n teal">11,519</div><div class="l">metagenomic samples used for abundance &amp; richness</div></div>
+          <div class="stat"><div class="n amber">13</div><div class="l">distinct habitats represented</div></div>
+          <div class="stat"><div class="n">178,107</div><div class="l">unigenes flagged as ARG by ≥1 pipeline</div></div>
+        </div>
 
-    <div class="card">
-      <h3>Detection pipelines</h3>
-      <p class="desc">Six core tools, each with its own reference database and calling logic.</p>
-      <ul class="plain">
-        <li>fARGene v0.1</li>
-        <li>DeepARG v2</li>
-        <li>AMRFinderPlus v4.0.15</li>
-        <li>RGI v6.0.3 (CARD v4.0.0)</li>
-        <li>ResFinder v2.4.0</li>
-        <li>ABRicate v1.0.1 (run against ARGANNOT, MEGARes, CARD, NCBI, ResFinder)</li>
-      </ul>
+        <div class="card">
+          <h3>Detection pipelines</h3>
+          <p class="desc">Six core tools, each with its own reference database and calling logic.</p>
+          <ul class="plain">
+            <li>fARGene v0.1</li>
+            <li>DeepARG v2</li>
+            <li>AMRFinderPlus v4.0.15</li>
+            <li>RGI v6.0.3 (CARD v4.0.0)</li>
+            <li>ResFinder v2.4.0</li>
+            <li>ABRicate v1.0.1 (run against ARGANNOT, MEGARes, CARD, NCBI, ResFinder)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="intro-sidebar">
+        <div class="card">
+          <h3 style="font-size:14px;">Citations of core pipeline papers</h3>
+          <p class="desc" style="font-size:11.5px;" id="intro-citations-note">Loading…</p>
+          <div id="intro-citations-chart" class="plotwrap"></div>
+        </div>
+      </div>
     </div>
 
     <p class="footnote">Data: <a href="https://www.biorxiv.org/content/10.64898/2026.05.11.724158v1" target="_blank">bioRxiv preprint</a> ·
@@ -167,6 +195,134 @@ function renderIntroSection(el){
     const choiceEl = getOrCreateSection('sec-choice');
     renderChoiceSection(choiceEl);
     scrollToSection('sec-choice');
+  });
+
+  drawCitationsChart();
+}
+
+const CITATION_DOIS = {
+  'ResFinder':      ['10.1093/jac/dks261', '10.1093/jac/dkaa345'],
+  'RGI | CARD':     ['10.1128/aac.00419-13', '10.1093/nar/gkw1004', '10.1093/nar/gkac920'],
+  'ARG-ANNOT':      ['10.1128/aac.01310-13'],
+  'AMRFinderPlus':  ['10.1038/s41598-021-91456-0'],
+  'DeepARG':        ['10.1186/s40168-018-0401-z'],
+  'MEGARes':        ['10.1093/nar/gkz1010'],
+  'fARGene':        ['10.1186/s40168-017-0353-8', '10.1186/s40168-019-0670-1',
+                      '10.1038/s42003-023-05174-6', '10.1099/mgen.0.000770',
+                      '10.1186/s12864-017-4064-0', '10.1099/mgen.0.000455']
+};
+
+// Snapshot (Google Scholar, 14 Apr 2026) -- shown instantly while the live
+// OpenAlex fetch runs, and used as a fallback if that fetch fails.
+const CITATION_FALLBACK = {
+  'ResFinder':     {total: 8903, since2025: 1601},
+  'RGI | CARD':    {total: 7427, since2025: 2286},
+  'ARG-ANNOT':     {total: 1589, since2025: 205},
+  'AMRFinderPlus': {total: 1445, since2025: 755},
+  'DeepARG':       {total: 964,  since2025: 289},
+  'MEGARes':       {total: 479,  since2025: 121},
+  'fARGene':       {total: 440,  since2025: 122}
+};
+
+function renderCitationRows(byTool){
+  return Object.entries(byTool)
+    .map(([tool, d]) => ({tool, before2025: d.total - d.since2025, since2025: d.since2025, total: d.total}))
+    .sort((a,b) => a.total - b.total);
+}
+
+function alignCitationsSidebar(){
+  const main = document.querySelector('.intro-main');
+  const sidebarCard = document.querySelector('.intro-sidebar .card');
+  if(!main || !sidebarCard || window.innerWidth <= 820) return;
+  const targetHeight = main.offsetHeight;
+  sidebarCard.style.height = targetHeight + 'px';
+
+  const chartDiv = document.getElementById('intro-citations-chart');
+  const others = Array.from(sidebarCard.children).filter(c => c !== chartDiv);
+  const usedHeight = others.reduce((sum, c) => sum + c.offsetHeight, 0);
+  const style = getComputedStyle(sidebarCard);
+  const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const gaps = 12 * Math.max(0, others.length); // approx margin between stacked children
+  const chartHeight = Math.max(160, targetHeight - usedHeight - padding - gaps);
+  Plotly.relayout(chartDiv, {height: chartHeight}).catch(()=>{});
+}
+
+function plotCitations(rows, sourceLabel){
+  Plotly.react('intro-citations-chart', [
+    {
+      type:'bar', orientation:'h', name:'Before 2025',
+      y: rows.map(r=>r.tool), x: rows.map(r=>r.before2025),
+      marker:{color:'#8a9a95'},
+      hovertemplate:'%{y} — before 2025: %{x:,}<extra></extra>'
+    },
+    {
+      type:'bar', orientation:'h', name:'2025–26',
+      y: rows.map(r=>r.tool), x: rows.map(r=>r.since2025),
+      marker:{color:'#1d3557'},
+      hovertemplate:'%{y} — 2025\u201326: %{x:,}<extra></extra>'
+    }
+  ], {...PLOTLY_LAYOUT_BASE, barmode:'stack',
+    height: 230, margin:{t:6,l:88,r:10,b:28},
+    font:{...PLOTLY_LAYOUT_BASE.font, size:10.5},
+    xaxis:{title:'', gridcolor:'#dde2de', tickfont:{size:9.5}, rangemode:'nonnegative'},
+    yaxis:{automargin:true, tickfont:{size:10}},
+    legend:{orientation:'h', y:-0.22, font:{size:9.5}}
+  }, {...PLOTLY_CONFIG, displayModeBar:false}).then(()=>{
+    requestAnimationFrame(alignCitationsSidebar);
+  });
+
+  const note = document.getElementById('intro-citations-note');
+  if(note) note.textContent = sourceLabel;
+}
+
+let citationsResizeHandler = null;
+
+function drawCitationsChart(){
+  // Show the fallback snapshot immediately so the sidebar never looks empty.
+  plotCitations(renderCitationRows(CITATION_FALLBACK), 'Google Scholar, as of 14 Apr 2026 (loading live data\u2026)');
+
+  if(citationsResizeHandler) window.removeEventListener('resize', citationsResizeHandler);
+  let resizeTimer;
+  citationsResizeHandler = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(alignCitationsSidebar, 150);
+  };
+  window.addEventListener('resize', citationsResizeHandler);
+
+  // Then try to fetch live counts from OpenAlex and replace it in place.
+  const allDois = Object.values(CITATION_DOIS).flat();
+  const url = `https://api.openalex.org/works?filter=doi:${allDois.join('|')}&per-page=50&mailto=arg-explorer@example.com`;
+
+  fetch(url).then(res=>{
+    if(!res.ok) throw new Error('OpenAlex request failed: '+res.status);
+    return res.json();
+  }).then(data=>{
+    const byDoi = {};
+    (data.results||[]).forEach(w=>{
+      if(!w.doi) return;
+      byDoi[w.doi.replace('https://doi.org/','')] = w;
+    });
+
+    const liveByTool = {};
+    Object.entries(CITATION_DOIS).forEach(([tool, dois])=>{
+      let total = 0, since2025 = 0;
+      dois.forEach(doi=>{
+        const w = byDoi[doi];
+        if(!w) return;
+        total += w.cited_by_count || 0;
+        (w.counts_by_year||[]).forEach(cy=>{ if(cy.year >= 2025) since2025 += cy.cited_by_count; });
+      });
+      liveByTool[tool] = {total, since2025};
+    });
+
+    // Only switch to live data if we actually got numbers for every pipeline --
+    // a partial response is more confusing than just keeping the labeled fallback.
+    const gotAll = Object.values(liveByTool).every(d => d.total > 0);
+    if(!gotAll) throw new Error('Incomplete OpenAlex response');
+
+    plotCitations(renderCitationRows(liveByTool), 'Live via OpenAlex, updated on load. Counts differ from Google Scholar (different index coverage).');
+  }).catch(()=>{
+    plotCitations(renderCitationRows(CITATION_FALLBACK), 'Google Scholar, as of 14 Apr 2026 (live fetch unavailable \u2014 showing last known snapshot).');
   });
 }
 
@@ -261,12 +417,16 @@ function renderAnalysisSection(el, habitat){
         <label>RGI identity threshold</label>
         <div id="${P}args-rgi-identity"></div>
       </div>
+      <div class="control" style="flex:1;min-width:320px;">
+        <label>Pipelines</label>
+        <div id="${P}args-pipeline-chips"></div>
+      </div>
     </div>
 
     <div class="grid3">
       <div class="card" id="${P}card-argcount">
         <h3>Number of ARGs</h3>
-        <p class="desc">Total distinct unigenes called as an ARG by each pipeline. Choosing a stricter identity threshold above swaps that pipeline's bar for the filtered version.</p>
+        <p class="desc">Total distinct unigenes called as an ARG by each pipeline. Choosing an identity threshold above adds that filtered pipeline alongside the original, so you can compare both directly.</p>
         <div id="${P}args-bar" class="plotwrap"></div>
       </div>
 
@@ -300,10 +460,11 @@ function renderAnalysisSection(el, habitat){
 
   let deepargLevel = 'DeepARG';   // DeepARG | DeepARG70 | DeepARG80 | DeepARG90
   let rgiLevel = 'RGI-DIAMOND';   // RGI-DIAMOND | RGI-DIAMOND70/80/90
+  let selectedPipelines = [...basicTools];
 
   function barToolSet(){
     // swap: the chosen identity level REPLACES the base pipeline
-    return basicTools.map(t=>{
+    return selectedPipelines.map(t=>{
       if(t==='DeepARG') return deepargLevel;
       if(t==='RGI-DIAMOND') return rgiLevel;
       return t;
@@ -313,7 +474,7 @@ function renderAnalysisSection(el, habitat){
   function jaccardToolSet(){
     // add-alongside, positioned right next to its base pipeline (not appended at the end)
     const set = [];
-    basicTools.forEach(t=>{
+    selectedPipelines.forEach(t=>{
       set.push(t);
       if(t==='DeepARG' && deepargLevel!=='DeepARG') set.push(deepargLevel);
       if(t==='RGI-DIAMOND' && rgiLevel!=='RGI-DIAMOND') set.push(rgiLevel);
@@ -321,23 +482,30 @@ function renderAnalysisSection(el, habitat){
     return set;
   }
 
+  function sharedChartHeight(){
+    const n = jaccardToolSet().length;
+    return Math.max(420, n*44);
+  }
+
   function drawBar(){
-    const tools = barToolSet();
+    const h = sharedChartHeight();
+    const tools = jaccardToolSet();
     const argCounts = habitat ? habArgCounts(habitat) : DATA.arg_counts;
-    const rows = tools.map(t=>argCounts.find(d=>d.tool===t)).filter(Boolean)
-      .sort((a,b)=>b.n-a.n);
+    const rows = tools.map(t=>argCounts.find(d=>d.tool===t)).filter(Boolean);
     Plotly.react(`${P}args-bar`, [{
       type:'bar', orientation:'h',
       y: rows.map(d=>TOOL_LABEL[d.tool]||d.tool),
       x: rows.map(d=>d.n),
       marker:{color: rows.map(d=>DB_COLOR[d.tools_db]||'#1d3557'), line:{color:'#ffffff', width:1}},
       hovertemplate: '%{y}: %{x:,}<extra></extra>'
-    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(320, rows.length*26),
-         xaxis:{title:'Number of ARGs', gridcolor:'#dde2de'},
+    }], {...PLOTLY_LAYOUT_BASE, height:h,
+         margin:{t:8,l:75,r:8,b:75},
+         xaxis:{title:'Number of ARGs', gridcolor:'#dde2de', rangemode:'nonnegative'},
          yaxis:{automargin:true, autorange:'reversed'}}, PLOTLY_CONFIG);
   }
 
   function drawJaccard(){
+    const h = sharedChartHeight();
     const tools = jaccardToolSet();
     const labels = tools.map(t=>TOOL_LABEL[t]||t);
     const jaccardData = habitat ? habJaccardFull(habitat) : DATA.jaccard_full;
@@ -347,19 +515,19 @@ function renderAnalysisSection(el, habitat){
       const v = jmap.get(tr+'|'+tc);
       return v===undefined ? null : v;
     }));
-    const side = Math.max(440, tools.length*44);
     Plotly.react(`${P}args-jaccard`, [{
       type:'heatmap', z, x:labels, y:labels,
       colorscale:[[0,'#eef0ee'],[1,'#2a9d8f']], zmin:0, zmax:1,
       hovertemplate:'%{y} vs %{x}: %{z:.0%}<extra></extra>',
-      colorbar:{tickformat:'.0%', thickness:14}
-    }], {...PLOTLY_LAYOUT_BASE, height:side,
-         margin:{t:20,l:150,r:20,b:150},
-         xaxis:{tickangle:-45, automargin:true, tickfont:{size:11}},
-         yaxis:{autorange:'reversed', automargin:true, tickfont:{size:11}}}, PLOTLY_CONFIG);
+      colorbar:{tickformat:'.0%', thickness:10}
+    }], {...PLOTLY_LAYOUT_BASE, height:h,
+         margin:{t:8,l:75,r:8,b:75},
+         xaxis:{tickangle:-45, automargin:true, tickfont:{size:9.5}},
+         yaxis:{autorange:'reversed', automargin:true, tickfont:{size:9.5}, tickangle:-45}}, PLOTLY_CONFIG);
   }
 
   function drawIdentityDistribution(){
+    const h = sharedChartHeight();
     const idist = habitat ? habIdentityDistribution(habitat) : DATA.identity_distribution;
     const x = idist.bin_centers;
     const traces = idist.tools.map(t=>({
@@ -369,9 +537,9 @@ function renderAnalysisSection(el, habitat){
             dash: t.tool.startsWith('ABRicate') ? 'dash' : 'solid'},
       hovertemplate: (TOOL_LABEL[t.tool]||t.tool)+' — %{x:.0f}% identity: %{y:.1%}<extra></extra>'
     }));
-    Plotly.react(`${P}args-identity`, traces, {...PLOTLY_LAYOUT_BASE, height:420,
-      xaxis:{title:'Percent identity to reference', gridcolor:'#dde2de'},
-      yaxis:{title:'Density', gridcolor:'#dde2de'},
+    Plotly.react(`${P}args-identity`, traces, {...PLOTLY_LAYOUT_BASE, height:h,
+      xaxis:{title:'Percent identity to reference', gridcolor:'#dde2de', rangemode:'nonnegative'},
+      yaxis:{title:'Density', gridcolor:'#dde2de', rangemode:'nonnegative'},
       legend:{orientation:'h', y:-0.3}}, PLOTLY_CONFIG);
   }
 
@@ -381,15 +549,19 @@ function renderAnalysisSection(el, habitat){
       (v)=>{habitat=v; CHOSEN_HABITAT=v; drawBar(); drawJaccard(); drawIdentityDistribution();});
   }
 
+  chipToggle(document.getElementById(`${P}args-pipeline-chips`),
+    basicTools.map(t=>({value:t,label:TOOL_LABEL[t]||t})), selectedPipelines,
+    (vals)=>{selectedPipelines=vals; drawBar(); drawJaccard(); drawIdentityDistribution();});
+
   makeSelect(document.getElementById(`${P}args-deeparg-identity`),
     [{value:'DeepARG',label:'No threshold'},{value:'DeepARG70',label:'≥70%'},
      {value:'DeepARG80',label:'≥80%'},{value:'DeepARG90',label:'≥90%'}],
-    deepargLevel, false, (v)=>{deepargLevel=v; drawBar(); drawJaccard();});
+    deepargLevel, false, (v)=>{deepargLevel=v; drawBar(); drawJaccard(); drawIdentityDistribution();});
 
   makeSelect(document.getElementById(`${P}args-rgi-identity`),
     [{value:'RGI-DIAMOND',label:'No threshold'},{value:'RGI-DIAMOND70',label:'≥70%'},
      {value:'RGI-DIAMOND80',label:'≥80%'},{value:'RGI-DIAMOND90',label:'≥90%'}],
-    rgiLevel, false, (v)=>{rgiLevel=v; drawBar(); drawJaccard();});
+    rgiLevel, false, (v)=>{rgiLevel=v; drawBar(); drawJaccard(); drawIdentityDistribution();});
 
   drawBar(); drawJaccard(); drawIdentityDistribution();
 
@@ -434,42 +606,41 @@ function renderGeneClassesSection(el, habitat){
     <h2>Gene Classes</h2>
     <p class="sub">Same pipelines, broken down by ARG class.</p>
 
-    <div class="controls" id="${P}pipeline-controls">
+    <div class="controls">
       ${habitat ? `<div class="control">
         <label>Habitat</label>
         <div id="${P}habitat-select"></div>
       </div>` : ''}
-      <div class="control" style="flex:1;min-width:320px;">
+      <div class="control" id="${P}pipeline-controls" style="flex:1;min-width:220px;">
         <label>Pipelines</label>
         <div id="${P}pipeline-chips"></div>
       </div>
-    </div>
-
-    <div class="controls" id="${P}filter-controls">
-      <div class="control">
-        <label>DeepARG identity threshold</label>
-        <div id="${P}deeparg-identity"></div>
-      </div>
-      <div class="control">
-        <label>RGI identity threshold</label>
-        <div id="${P}rgi-identity"></div>
-      </div>
-      <div class="control" style="flex:1;min-width:280px;" id="${P}class-control">
-        <label>Gene classes shown (default ${defaultClasses.length})</label>
-        <div id="${P}class-select"></div>
+      <div class="control" id="${P}filter-controls" style="display:flex;flex-direction:row;flex-wrap:nowrap;gap:16px;flex:2;">
+        <div class="control" style="flex:0 0 auto;">
+          <label>DeepARG identity threshold</label>
+          <div id="${P}deeparg-identity"></div>
+        </div>
+        <div class="control" style="flex:0 0 auto;">
+          <label>RGI identity threshold</label>
+          <div id="${P}rgi-identity"></div>
+        </div>
+        <div class="control" style="flex:1;min-width:200px;" id="${P}class-control">
+          <label>Gene classes shown (default ${defaultClasses.length})</label>
+          <div id="${P}class-select"></div>
+        </div>
       </div>
     </div>
 
     <div class="grid3">
       <div class="card" id="${P}card-identity">
         <h3>Identity Distribution by Gene Class</h3>
-        <p class="desc">DeepARG vs. RGI-DIAMOND only. Box = spread of percent identity for that pipeline's calls in that class.</p>
+        <p class="desc">DeepARG vs. RGI-DIAMOND (or their filtered variant, per the thresholds above). Box = spread of percent identity for that pipeline's calls in that class.</p>
         <div id="${P}identity-by-class" class="plotwrap"></div>
       </div>
 
       <div class="card" id="${P}card-classbar">
         <h3>Number of Genes per Gene Class</h3>
-        <p class="desc">Total distinct unigenes called in each ARG class. Each gene class is a row; bars within a row compare pipelines.</p>
+        <p class="desc">Total distinct unigenes called in each ARG class. Each gene class is a row; bars within a row compare pipelines. Choosing an identity threshold above adds that filtered pipeline alongside the original.</p>
         <div id="${P}class-bar" class="plotwrap"></div>
       </div>
 
@@ -507,14 +678,25 @@ function renderGeneClassesSection(el, habitat){
     });
   }
 
+  function classBarToolSet(){
+    // add-alongside: keep the original pipeline, add the filtered variant next to it
+    const set = [];
+    selectedPipelines.forEach(t=>{
+      set.push(t);
+      if(t==='DeepARG' && deepargLevel!=='DeepARG') set.push(deepargLevel);
+      if(t==='RGI-DIAMOND' && rgiLevel!=='RGI-DIAMOND') set.push(rgiLevel);
+    });
+    return set;
+  }
+
   function geneClassProp(){ return habitat ? habGeneClassProportion(habitat) : DATA.gene_class_proportion; }
   function identityByClass(){ return habitat ? habIdentityByClass(habitat) : DATA.identity_by_class; }
 
   function drawIdentityByClass(){
     const classes = selectedClasses;
-    const classLabels = classes.map(cleanLevel);
+    const classLabels = classes.map(wrapClassLabel);
     const ibc = identityByClass();
-    const traces = ['DeepARG','RGI-DIAMOND'].map(t=>{
+    const traces = [deepargLevel, rgiLevel].map(t=>{
       const rows = classes.map(cl=>ibc.find(d=>d.tool===t && d.new_level===cl));
       const color = DB_COLOR[TOOL_DB[t]] || '#1B9E77';
       return {
@@ -522,21 +704,20 @@ function renderGeneClassesSection(el, habitat){
         q1: rows.map(r=>r?r.q25:null), median: rows.map(r=>r?r.median:null),
         q3: rows.map(r=>r?r.q75:null), lowerfence: rows.map(r=>r?r.w1:null),
         upperfence: rows.map(r=>r?r.w2:null),
-        marker:{color}, line:{color}, hoveron:'boxes',
-        hovertemplate: 'Median: %{median:.1f}%<br>Q1: %{q1:.1f}% · Q3: %{q3:.1f}%<extra></extra>'
+        marker:{color}, line:{color}, hoverinfo:'skip'
       };
     });
     Plotly.react(`${P}identity-by-class`, traces, {...PLOTLY_LAYOUT_BASE, boxmode:'group',
-      height: Math.max(460, classes.length*42), margin:{t:20,l:170,r:20,b:60},
-      xaxis:{title:'Percent identity', range:[0,102], gridcolor:'#dde2de'},
-      yaxis:{automargin:true, autorange:'reversed', categoryorder:'array', categoryarray:classLabels},
+      height: Math.max(460, classes.length*42), margin:{t:10,l:100,r:8,b:95},
+      xaxis:{title:'Percent identity', range:[0,102], gridcolor:'#dde2de', rangemode:'nonnegative'},
+      yaxis:{automargin:false, autorange:'reversed', categoryorder:'array', categoryarray:classLabels, tickangle:-45, tickfont:{size:9.5}},
       legend:{orientation:'h', y:-0.12}}, PLOTLY_CONFIG);
   }
 
   function drawClassBar(){
-    const tools = barToolSet();
+    const tools = classBarToolSet();
     const classes = selectedClasses;
-    const classLabels = classes.map(cleanLevel);
+    const classLabels = classes.map(wrapClassLabel);
     const gcp = geneClassProp();
     const traces = tools.map(t=>{
       const row = DATA.tool_meta.tools.find(d=>d.tool===t);
@@ -562,11 +743,11 @@ function renderGeneClassesSection(el, habitat){
 
     Plotly.react(`${P}class-bar`, traces, {...PLOTLY_LAYOUT_BASE, barmode:'group',
       height: Math.max(500, classes.length*70),
-      margin:{t:50,l:170,r:20,b:60},
+      margin:{t:50,l:100,r:20,b:60},
       shapes: dividers,
-      xaxis:{title:'Number of ARGs', gridcolor:'#dde2de'},
-      xaxis2:{title:'Number of ARGs', overlaying:'x', side:'top', matches:'x', gridcolor:'#dde2de'},
-      yaxis:{automargin:true, autorange:'reversed', categoryorder:'array', categoryarray:classLabels},
+      xaxis:{title:'Number of ARGs', gridcolor:'#dde2de', rangemode:'nonnegative'},
+      xaxis2:{title:'Number of ARGs', overlaying:'x', side:'top', matches:'x', gridcolor:'#dde2de', rangemode:'nonnegative'},
+      yaxis:{automargin:false, autorange:'reversed', categoryorder:'array', categoryarray:classLabels, tickangle:-45, tickfont:{size:9.5}},
       legend:{orientation:'h', y:-0.12}}, PLOTLY_CONFIG);
   }
 
@@ -579,28 +760,28 @@ function renderGeneClassesSection(el, habitat){
       return row ? row.p : 0;
     }));
     Plotly.react(`${P}prop-heatmap`, [{
-      type:'heatmap', z, x: tools.map(t=>TOOL_LABEL[t]||t), y: classes.map(cleanLevel),
+      type:'heatmap', z, x: tools.map(t=>TOOL_LABEL[t]||t), y: classes.map(wrapClassLabel),
       colorscale:[[0,'#eef0ee'],[1,'#2a9d8f']],
       hovertemplate:'%{y} — %{x}: %{z:.1%}<extra></extra>',
-      colorbar:{tickformat:'.0%', thickness:14}
-    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(400, classes.length*30),
-         margin:{t:20,l:170,r:20,b:130},
-         xaxis:{tickangle:-45, automargin:true, tickfont:{size:11}},
-         yaxis:{automargin:true, tickfont:{size:11}, autorange:'reversed'}}, PLOTLY_CONFIG);
+      colorbar:{tickformat:'.0%', thickness:10}
+    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(460, classes.length*42),
+         margin:{t:10,l:100,r:8,b:95},
+         xaxis:{tickangle:-45, automargin:true, tickfont:{size:9.5}},
+         yaxis:{automargin:false, tickfont:{size:9.5}, autorange:'reversed', tickangle:-45}}, PLOTLY_CONFIG);
   }
 
   makeSelect(document.getElementById(`${P}deeparg-identity`),
     [{value:'DeepARG',label:'No threshold'},{value:'DeepARG70',label:'≥70%'},
      {value:'DeepARG80',label:'≥80%'},{value:'DeepARG90',label:'≥90%'}],
-    deepargLevel, false, (v)=>{deepargLevel=v; drawClassBar(); drawPropHeatmap();});
+    deepargLevel, false, (v)=>{deepargLevel=v; drawIdentityByClass(); drawClassBar(); drawPropHeatmap();});
 
   makeSelect(document.getElementById(`${P}rgi-identity`),
     [{value:'RGI-DIAMOND',label:'No threshold'},{value:'RGI-DIAMOND70',label:'≥70%'},
      {value:'RGI-DIAMOND80',label:'≥80%'},{value:'RGI-DIAMOND90',label:'≥90%'}],
-    rgiLevel, false, (v)=>{rgiLevel=v; drawClassBar(); drawPropHeatmap();});
+    rgiLevel, false, (v)=>{rgiLevel=v; drawIdentityByClass(); drawClassBar(); drawPropHeatmap();});
 
   makeCheckList(document.getElementById(`${P}class-select`),
-    DATA.gene_class_order.all.map(c=>({value:c,label:cleanLevel(c)})), selectedClasses,
+    DATA.gene_class_order.all.map(c=>({value:c,label:c})), selectedClasses,
     (vals)=>{selectedClasses = vals; drawIdentityByClass(); drawClassBar(); drawPropHeatmap();}, {min:1});
 
   chipToggle(document.getElementById(`${P}pipeline-chips`),
@@ -674,14 +855,11 @@ function renderCSCSection(el, habitat){
         <label>RGI identity threshold</label>
         <div id="${P}rgi-identity"></div>
       </div>
-      <div class="control" style="flex:1;min-width:280px;">
+      <div class="control" style="flex:1;min-width:220px;">
         <label>Gene classes shown (default ${defaultClasses.length})</label>
         <div id="${P}class-select"></div>
       </div>
-    </div>
-
-    <div class="controls">
-      <div class="control" style="flex:1;min-width:320px;">
+      <div class="control" style="flex:1;min-width:280px;">
         <label>Reference pipelines (1–6)</label>
         <div id="${P}ref-chips"></div>
       </div>
@@ -742,7 +920,7 @@ function renderCSCSection(el, habitat){
 
   function draw(){
     const ts = toolSet();
-    const classLabels = selectedClasses.map(cleanLevel);
+    const classLabels = selectedClasses.map(wrapClassLabel);
     const refs = selectedRefIndices.map(i=>ts[i]);
     const n = refs.length;
     const gap = 0.035;
@@ -755,7 +933,7 @@ function renderCSCSection(el, habitat){
       height: Math.max(480, classLabels.length*46),
       margin:{t:40,l:170,r:20,b:60},
       showlegend:false,
-      yaxis:{automargin:true, autorange:'reversed', categoryorder:'array', categoryarray:classLabels},
+      yaxis:{automargin:true, autorange:'reversed', categoryorder:'array', categoryarray:classLabels, tickangle:-45},
       annotations:[]
     };
 
@@ -784,7 +962,7 @@ function renderCSCSection(el, habitat){
       traces.push({
         type:'box', orientation:'h', name: TOOL_LABEL[refTool]||refTool,
         xaxis: xkey, yaxis:'y',
-        y: rows.map(d=>cleanLevel(d.new_level)),
+        y: rows.map(d=>wrapClassLabel(d.new_level)),
         x: rows.map(d=>d.csc),
         text: rows.map(d=>TOOL_LABEL[d.tool_comp]||d.tool_comp),
         boxpoints:'all', jitter:0.6, pointpos:0, hoveron:'points',
@@ -796,7 +974,7 @@ function renderCSCSection(el, habitat){
 
       layout[axisKey] = {
         domain:[d0, d1], anchor:'y',
-        range:[0,1.02], tickformat:'.0%', gridcolor:'#dde2de'
+        range:[0,1.02], tickformat:'.0%', gridcolor:'#dde2de', rangemode:'nonnegative'
       };
 
       layout.annotations.push({
@@ -830,7 +1008,7 @@ function renderCSCSection(el, habitat){
   }
 
   makeCheckList(document.getElementById(`${P}class-select`),
-    DATA.gene_class_order.all.map(c=>({value:c,label:cleanLevel(c)})), selectedClasses,
+    DATA.gene_class_order.all.map(c=>({value:c,label:c})), selectedClasses,
     (vals)=>{selectedClasses=vals; draw();}, {min:1});
 
   draw();
@@ -919,7 +1097,6 @@ function renderAbundance(el, habitat){
     <div class="grid3">
       <div class="card" id="ab-card-abundance">
         <h3>Relative abundance per sample</h3>
-        <p class="desc">Box = interquartile range, whiskers extend to 1.5×IQR. Points are a random sample of individual metagenomes.</p>
         <div id="ab-abundance-box" class="plotwrap"></div>
       </div>
 
@@ -1012,7 +1189,7 @@ function renderAbundance(el, habitat){
     const jitter = DATA.abundance_jitter_sample.filter(d=>d.habitat===habitat);
     Plotly.react('ab-abundance-box', boxTrace(summary, jitter, 'abundance'),
       {...PLOTLY_LAYOUT_BASE, height:420, showlegend:false,
-       yaxis:{title:'Relative abundance (reads/million)', gridcolor:'#dde2de',
+       yaxis:{title:'Relative abundance (reads/million)', gridcolor:'#dde2de', rangemode:'nonnegative',
               range: zoomRange(jitter, barToolSet(), 'abundance')},
        xaxis:{tickangle:-45}}, PLOTLY_CONFIG);
   }
@@ -1021,7 +1198,7 @@ function renderAbundance(el, habitat){
     const jitter = DATA.abundance_jitter_sample.filter(d=>d.habitat===habitat);
     Plotly.react('ab-richness-box', boxTrace(summary, jitter, 'richness'),
       {...PLOTLY_LAYOUT_BASE, height:420, showlegend:false,
-       yaxis:{title:'Richness', gridcolor:'#dde2de',
+       yaxis:{title:'Richness', gridcolor:'#dde2de', rangemode:'nonnegative',
               range: zoomRange(jitter, barToolSet(), 'richness')},
        xaxis:{tickangle:-45}}, PLOTLY_CONFIG);
   }
@@ -1070,7 +1247,7 @@ function renderAbundance(el, habitat){
         });
       });
 
-      layout[axisKey] = {domain:[d0,d1], anchor:'y', gridcolor:'#dde2de'};
+      layout[axisKey] = {domain:[d0,d1], anchor:'y', gridcolor:'#dde2de', rangemode:'nonnegative'};
       layout.annotations.push({
         xref:'paper', yref:'paper', x:(d0+d1)/2, y:1.04,
         xanchor:'center', yanchor:'bottom',
@@ -1099,7 +1276,7 @@ function renderAbundance(el, habitat){
     getHabitats().map(h=>({value:h,label:h})), habitat, false,
     (v)=>{habitat=v; CHOSEN_HABITAT=v; drawAll();});
   makeCheckList(document.getElementById('ab-gene-select'),
-    DATA.gene_class_order.all.map(c=>({value:c,label:cleanLevel(c)})), selectedGenes,
+    DATA.gene_class_order.all.map(c=>({value:c,label:c})), selectedGenes,
     (vals)=>{selectedGenes=vals.slice(0,15); drawClassAbundance();}, {min:1, max:15});
 
   drawAll();
@@ -1162,7 +1339,7 @@ function renderPanCore(el, habitat){
     <div class="grid2">
       <div class="card">
         <h3>Pan-resistome size</h3>
-        <p class="desc">Mean richness (number of ARG classes) across the 500 subsamples.</p>
+        <p class="desc">Mean richness (number of ARG classes) across the 500 subsamples. Choosing an identity threshold above adds that filtered pipeline alongside the original.</p>
         <div id="pc-pan-chart" class="plotwrap"></div>
       </div>
       <div class="card">
@@ -1187,11 +1364,14 @@ function renderPanCore(el, habitat){
   let rgiLevel = 'RGI-DIAMOND';
 
   function barToolSet(){
-    return selectedTools.map(t=>{
-      if(t==='DeepARG') return deepargLevel;
-      if(t==='RGI-DIAMOND') return rgiLevel;
-      return t;
+    // add-alongside: keep the original pipeline, add the filtered variant next to it
+    const set = [];
+    selectedTools.forEach(t=>{
+      set.push(t);
+      if(t==='DeepARG' && deepargLevel!=='DeepARG') set.push(deepargLevel);
+      if(t==='RGI-DIAMOND' && rgiLevel!=='RGI-DIAMOND') set.push(rgiLevel);
     });
+    return set;
   }
 
   function draw(){
@@ -1212,26 +1392,24 @@ function renderPanCore(el, habitat){
       return DB_COLOR[meta?meta.tools_db:''] || '#1d3557';
     }
 
-    const panRows = [...rows].sort((a,b)=>b.pan-a.pan);
     Plotly.react('pc-pan-chart', [{
       type:'bar', orientation:'h',
-      y: panRows.map(r=>TOOL_LABEL[r.tool]||r.tool),
-      x: panRows.map(r=>r.pan),
-      marker:{color: panRows.map(r=>colorFor(r.tool)), line:{color:'#ffffff', width:1}},
+      y: rows.map(r=>TOOL_LABEL[r.tool]||r.tool),
+      x: rows.map(r=>r.pan),
+      marker:{color: rows.map(r=>colorFor(r.tool)), line:{color:'#ffffff', width:1}},
       hovertemplate:'%{y}: %{x:,.0f}<extra></extra>'
-    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(320, panRows.length*30),
-      xaxis:{title:'Number of ARG classes', gridcolor:'#dde2de'},
+    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(320, rows.length*30),
+      xaxis:{title:'Number of ARG classes', gridcolor:'#dde2de', rangemode:'nonnegative'},
       yaxis:{automargin:true, autorange:'reversed'}}, PLOTLY_CONFIG);
 
-    const coreRowsSorted = [...rows].sort((a,b)=>b.core-a.core);
     Plotly.react('pc-core-chart', [{
       type:'bar', orientation:'h',
-      y: coreRowsSorted.map(r=>TOOL_LABEL[r.tool]||r.tool),
-      x: coreRowsSorted.map(r=>r.core),
-      marker:{color: coreRowsSorted.map(r=>colorFor(r.tool)), line:{color:'#ffffff', width:1}},
+      y: rows.map(r=>TOOL_LABEL[r.tool]||r.tool),
+      x: rows.map(r=>r.core),
+      marker:{color: rows.map(r=>colorFor(r.tool)), line:{color:'#ffffff', width:1}},
       hovertemplate:'%{y}: %{x:,.0f}<extra></extra>'
-    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(320, coreRowsSorted.length*30),
-      xaxis:{title:'Number of ARG classes', gridcolor:'#dde2de'},
+    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(320, rows.length*30),
+      xaxis:{title:'Number of ARG classes', gridcolor:'#dde2de', rangemode:'nonnegative'},
       yaxis:{automargin:true, autorange:'reversed'}}, PLOTLY_CONFIG);
   }
 
@@ -1354,14 +1532,14 @@ function renderOverlap(el){
       marker:{color:'#2a9d8f'},
       hovertemplate:'vs %{y}: %{x:.0%}<extra></extra>'
     }], {...PLOTLY_LAYOUT_BASE, height: Math.max(260, rows.length*24),
-      xaxis:{title:'CSC', tickformat:'.0%', range:[0,1], gridcolor:'#dde2de'}, yaxis:{automargin:true}}, PLOTLY_CONFIG);
+      xaxis:{title:'CSC', tickformat:'.0%', range:[0,1], gridcolor:'#dde2de', rangemode:'nonnegative'}, yaxis:{automargin:true}}, PLOTLY_CONFIG);
   }
 
   chipToggle(document.getElementById('ov-ref-chips'),
     basicTools.map(t=>({value:t,label:TOOL_LABEL[t]||t})), selectedRef,
     (vals)=>{selectedRef=vals; drawHeatmap();});
   makeSelect(document.getElementById('ov-class-select'),
-    DATA.gene_class_order.all.map(c=>({value:c,label:cleanLevel(c)})), selectedClasses, true,
+    DATA.gene_class_order.all.map(c=>({value:c,label:c})), selectedClasses, true,
     (vals)=>{selectedClasses=vals.slice(0,15); drawHeatmap();}, 8);
 
   drawHeatmap();

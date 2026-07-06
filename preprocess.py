@@ -11,6 +11,21 @@ import numpy as np
 import pandas as pd
 from rds_parser import load_rds, rlist_names, rdf_to_pandas
 
+def tukey_whisker_bounds(vals, q25, q75, lo=None, hi=None):
+    """Correct Tukey boxplot whiskers: the most extreme *actual* data point
+    within 1.5*IQR of the box, not the raw Q1-1.5*IQR formula value itself
+    (which can extend past the true min/max of the data -- e.g. DeepARG's
+    identity values are hard-floored at 50 by the tool itself, but the raw
+    formula can compute a whisker below 50 if the IQR is small)."""
+    iqr = q75 - q25
+    fence_lo, fence_hi = q25 - 1.5*iqr, q75 + 1.5*iqr
+    in_range = vals[(vals >= fence_lo) & (vals <= fence_hi)]
+    w1 = in_range.min() if len(in_range) else vals.min()
+    w2 = in_range.max() if len(in_range) else vals.max()
+    if lo is not None: w1 = max(w1, lo)
+    if hi is not None: w2 = min(w2, hi)
+    return w1, w2
+
 def clean_nan(obj):
     """Recursively replace NaN/NaT with None so json.dumps produces valid JSON."""
     if isinstance(obj, float) and (np.isnan(obj)):
@@ -105,19 +120,21 @@ def build_habitat_data(unigenes, hab_csv_path, basic_tools, out_dir):
             idist.append({"tool": t, "n": int(len(vals)), "density": density})
         hab_identity_dist[h] = {"bin_centers": centers, "tools": idist}
 
-        # Identity by class (DeepARG, RGI-DIAMOND only)
+        # Identity by class -- DeepARG/RGI-DIAMOND plus their identity-threshold
+        # variants, so the chart can update when the user picks a threshold filter.
         ibc_rows = []
-        for t in ["DeepARG", "RGI-DIAMOND"]:
+        for t in ["DeepARG","DeepARG70","DeepARG80","DeepARG90",
+                  "RGI-DIAMOND","RGI-DIAMOND70","RGI-DIAMOND80","RGI-DIAMOND90"]:
             sub = uh[uh["tool"] == t]
             for cls, g in sub.groupby("new_level"):
                 vals = g["id"].dropna()
                 if len(vals) < 3:
                     continue
                 q25, q50, q75 = q(vals, .25), q(vals, .5), q(vals, .75)
-                iqr = q75 - q25
+                w1, w2 = tukey_whisker_bounds(vals, q25, q75, lo=0, hi=100)
                 ibc_rows.append({"tool": t, "new_level": cls, "n": int(len(vals)),
                                   "q25": q25, "median": q50, "q75": q75,
-                                  "w1": max(0, q25-1.5*iqr), "w2": min(100, q75+1.5*iqr)})
+                                  "w1": w1, "w2": w2})
         hab_identity_by_class[h] = columnar(pd.DataFrame(ibc_rows)) if ibc_rows else {"columns": [], "data": []}
 
         # CSC (class-specific coverage), same formula as the global csc_fnr table:
@@ -246,26 +263,26 @@ def main(rds_path, out_dir, hab_csv_path=None):
     dump({"bin_centers": centers, "tools": identity_dist},
          os.path.join(out_dir, "identity_distribution.json"))
 
-    # Identity (%) distribution PER GENE CLASS, for DeepARG and RGI-DIAMOND only.
-    # Used to show that DeepARG's identity is uniformly low across all classes,
-    # while RGI-DIAMOND is high for most classes but low for a handful.
+    # Identity (%) distribution PER GENE CLASS, for DeepARG/RGI-DIAMOND and their
+    # identity-threshold variants (so the chart updates when a filter is chosen).
     print("Computing identity-by-gene-class distributions ...")
     def q(s, p):
         v = s.quantile(p)
         return 0 if v < 0 else v
     id_by_class_rows = []
-    for t in ["DeepARG", "RGI-DIAMOND"]:
+    for t in ["DeepARG","DeepARG70","DeepARG80","DeepARG90",
+              "RGI-DIAMOND","RGI-DIAMOND70","RGI-DIAMOND80","RGI-DIAMOND90"]:
         sub = unigenes[unigenes["tool"] == t]
         for cls, g in sub.groupby("new_level"):
             vals = g["id"].dropna()
             if len(vals) < 3:
                 continue
             q25, q50, q75 = q(vals,.25), q(vals,.5), q(vals,.75)
-            iqr = q75 - q25
+            w1, w2 = tukey_whisker_bounds(vals, q25, q75, lo=0, hi=100)
             id_by_class_rows.append({
                 "tool": t, "new_level": cls, "n": int(len(vals)),
                 "q25": q25, "median": q50, "q75": q75,
-                "w1": max(0, q25-1.5*iqr), "w2": min(100, q75+1.5*iqr)
+                "w1": w1, "w2": w2
             })
     dump(columnar(pd.DataFrame(id_by_class_rows)), os.path.join(out_dir, "identity_by_class.json"))
 
@@ -276,27 +293,23 @@ def main(rds_path, out_dir, hab_csv_path=None):
         return 0 if v < 0 else v
 
     grp_cols = ["tool","habitat","tools_labels","tools_db","texture"]
+
+    def summary_stats(s):
+        q25, q50, q75 = q(s, .25), q(s, .5), q(s, .75)
+        w1, w2 = tukey_whisker_bounds(s, q25, q75, lo=0)
+        return pd.Series({"median": q50, "q25": q25, "q75": q75, "w1": w1, "w2": w2})
+
     abundance_summary = (abundance_tool_sample.groupby(grp_cols)["abundance"]
-        .agg(median="median",
-             q25=lambda s: q(s, .25), q75=lambda s: q(s, .75))
-        .reset_index())
-    abundance_summary["iqr"] = abundance_summary["q75"] - abundance_summary["q25"]
-    abundance_summary["w1"] = (abundance_summary["q25"] - 1.5*abundance_summary["iqr"]).clip(lower=0)
-    abundance_summary["w2"] = (abundance_summary["q75"] + 1.5*abundance_summary["iqr"]).clip(lower=0)
+        .apply(summary_stats).unstack().reset_index())
 
     richness_summary = (abundance_tool_sample.groupby(grp_cols)["richness"]
-        .agg(median="median",
-             q25=lambda s: q(s, .25), q75=lambda s: q(s, .75))
-        .reset_index())
-    richness_summary["iqr"] = richness_summary["q75"] - richness_summary["q25"]
-    richness_summary["w1"] = (richness_summary["q25"] - 1.5*richness_summary["iqr"]).clip(lower=0)
-    richness_summary["w2"] = (richness_summary["q75"] + 1.5*richness_summary["iqr"]).clip(lower=0)
+        .apply(summary_stats).unstack().reset_index())
 
     n_samples = (abundance_tool_sample.groupby("habitat")["sample"]
                  .nunique().reset_index(name="n_samples"))
 
-    dump(records(abundance_summary.drop(columns="iqr")), os.path.join(out_dir, "abundance_summary.json"))
-    dump(records(richness_summary.drop(columns="iqr")), os.path.join(out_dir, "richness_summary.json"))
+    dump(records(abundance_summary), os.path.join(out_dir, "abundance_summary.json"))
+    dump(records(richness_summary), os.path.join(out_dir, "richness_summary.json"))
     dump(records(n_samples), os.path.join(out_dir, "habitat_n_samples.json"))
 
     # capped random sample per tool+habitat, for a jitter/strip overlay (mirrors the R app's own subsampling)
