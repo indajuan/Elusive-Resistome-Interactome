@@ -689,7 +689,7 @@ function renderAnalysisSection(el, habitat, navKey){
   renderFAQ(el, habitat ? [] : [
     {title: "Confusing lower bars for higher jumps",
      text: "<ul><li>Despite RGI using 'perfect' and 'strict' thresholds, it reports only 10% of the ARGs with ≥80% identity level to the reference.</li><li>DeepARG reports only 15% the ARGs with ≥80% identity level to reference.</li></ul>"},
-    {title: "I agree to disagree",
+    {title: "Agree to disagree",
      text: "The highest Jaccard index was observed between ResFinder and ABRicate-ResFinder (73%), and between ABRicate-CARD and ABRicate-MEGARes."},
     {title: "Same map, same road, different destination",
      text: "ABRicate, compared to RGI, AMRFinderPlus, and ResFinder, shows different results."}
@@ -900,10 +900,10 @@ function renderGeneClassesSection(el, habitat, navKey){
   renderFAQ(el, habitat ? [] : [
     {title: "Go with the outflow",
      text: "<ul><li>DeepARG – 23,784 (58%) of the efflux pumps were labelled by the tool as 'multidrug', a category highlighted by the authors of the tool as an important technical challenge requiring manual curation.</li><li>DeepARG – 5,290 (13%) of the efflux pumps were labelled as “unclassified” with a median 'probability' of 98%.</li><li>RGI – There are significant difficulties in distinguishing between resistance-conferring pumps and homologs (<a href=\"https://doi.org/10.64898/2025.12.11.693720\" target=\"_blank\">Mukiri, K. M. et al., 2025</a>).</li></ul>"},
-    {title: "Blindly Pointing",
+    {title: "Blindly pointing",
      text: "Resistance to rifampicin is usually conferred through point mutations in the universal bacterial gene <em>rpoB</em>, which encodes the RNA polymerase-𝛽-subunit. DeepARG reported <em>rpoB</em> genes as ARGs without checking for specific point mutations conferring resistance and with a median identity threshold of 54%."},
     {title: "The Van-ishing Act",
-     text: "<ul><li>35% of <em>van</em> genes reported by RGI are <em>vanY</em> — an accessory D,D-carboxypeptidase (not the core ligase) that only increases resistance once the ligase-driven cassette is already active; it's not itself sufficient for resistance.</li><li>32% of <em>van</em> genes reported by RGI are <em>vanW</em> – an accessory gene of unknown function.</li><li>23% of <em>van</em> genes reported by RGI are <em>vanT</em> — 99% are below 80% identity. The housekeeping and regulatory gene alanine racemase and <em>vanT</em> share high sequence similarity.</li></ul>"}
+     text: "<ul><li>35% of <em>van</em> genes reported by RGI are <em>vanY</em> — an accessory D,D-carboxypeptidase (not the core ligase) that only increases resistance once the ligase-driven cassette is already active; it is not alone sufficient for resistance.</li><li>32% of <em>van</em> genes reported by RGI are <em>vanW</em> – an accessory gene of unknown function.</li><li>23% of <em>van</em> genes reported by RGI are <em>vanT</em> — 99% are below 80% identity. The housekeeping and regulatory gene alanine racemase and <em>vanT</em> share high sequence similarity; <em>vanT</em> alone is not sufficient for resistance.</li></ul>"}
   ]);
 }
 
