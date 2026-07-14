@@ -1,0 +1,84 @@
+name: Deploy webapp
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Restore built webapp/data cache
+        id: data-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: webapp/data
+          key: webapp-data-v1
+
+      - name: Set up pixi
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          cache: true
+
+      - name: Cache downloaded source data
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: data_zenodo_github
+          key: zenodo-data-v1-${{ hashFiles('download_data.sh') }}
+
+      - name: Download data
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        run: pixi run download
+
+      - name: Build unigenes.tsv
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        run: pixi run unigenes
+
+      - name: Build webapp/data/*.json
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        run: pixi run app-data
+
+      - name: Build webapp/data/core_pan/*
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        run: pixi run core-pan
+
+      - name: Save built webapp/data cache
+        if: steps.data-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: webapp/data
+          key: webapp-data-v1
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload webapp/ as Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: webapp
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
