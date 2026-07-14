@@ -100,7 +100,10 @@ def main():
 
     print(f"Reading args_abundances.tsv.gz ...")
     args_abundances = pd.read_csv(data_dir / "args_abundances.tsv.gz", sep="\t")
-    args_abundances = args_abundances.reset_index().rename(columns={"index": "X"})
+    if "X" not in args_abundances.columns and "Unnamed: 0" in args_abundances.columns:
+        # the file's first column (gene ID) has a blank header, so pandas
+        # names it "Unnamed: 0" instead of "X" -- recover the real name
+        args_abundances = args_abundances.rename(columns={"Unnamed: 0": "X"})
 
     print(f"Reading metagenomes_metadata.csv ...")
     metadata = pd.read_csv(data_dir / "metagenomes_metadata.csv")

@@ -121,7 +121,10 @@ def main():
 
     print(f"Reading + rarefying args_abundances.tsv.gz (depth={depth:,.0f}, seed={seed}) ...")
     ar = pd.read_csv(data_dir / "args_abundances.tsv.gz", sep="\t")
-    ar = ar.reset_index().rename(columns={"index": "X"})
+    if "X" not in ar.columns and "Unnamed: 0" in ar.columns:
+        # the file's first column (gene ID) has a blank header, so pandas
+        # names it "Unnamed: 0" instead of "X" -- recover the real name
+        ar = ar.rename(columns={"Unnamed: 0": "X"})
     print(f"  {len(ar):,} rows loaded ({time.time()-t0:.1f}s elapsed)")
     ar = rarefy(ar, metadata, depth=depth, seed=seed)
     ar = ar[ar["rarified_count"] > 0].rename(columns={"X": "query"})

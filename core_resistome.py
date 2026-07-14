@@ -78,6 +78,10 @@ def prepare_args_abundances(data_dir: Path, metadata: pd.DataFrame, centroid_map
                              depth: float, seed: int) -> pd.DataFrame:
     print("Reading args_abundances.tsv.gz ...")
     args_abundances = pd.read_csv(data_dir / "args_abundances.tsv.gz", sep="\t")
+    if "X" not in args_abundances.columns and "Unnamed: 0" in args_abundances.columns:
+        # the file's first column (gene ID) has a blank header, so pandas
+        # names it "Unnamed: 0" instead of "X" -- recover the real name
+        args_abundances = args_abundances.rename(columns={"Unnamed: 0": "X"})
 
     print(f"Rarefying to depth={depth:,.0f}, seed={seed} ...")
     args_abundances = rarefy(args_abundances, metadata, depth=depth, seed=seed)
