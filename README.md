@@ -30,37 +30,25 @@ their output).
 
 ## 0. Set up the Python environment
 
-The pipeline scripts (steps 2–4) need Python 3 with `pandas` and `numpy`.
-Pick **one** of the two options below (**A** or **B**), then use the matching command style
-for every `./script.py` call in steps 2–4 further down.
+You just cloned this repo. The pipeline scripts (steps 2–4) need Python 3
+with `pandas` and `numpy` — pick **one** of the two options below, then use
+the matching command style for every step further down.
 
 ### Option A — pixi (reproducible, recommended)
 
-#### 1. Retrieve the data and build the app
-```bash
-pixi run ./build_unigenes.py
-```
-
-#### 2. Run the web app
+This repo already includes `pixi.toml` and `pixi.lock`, pinning the exact
+package versions everyone should use.
 
 ```bash
-pixi run ./serve_webapp.sh
+curl -fsSL https://pixi.sh/install.sh | sh   # one-time install, then restart your terminal
+cd Elusive_app
+pixi install                                  # reproduces the exact environment from pixi.lock
 ```
 
-Serves `webapp/` at **http://localhost:8010** (needs `webapp/data/*.json`
-from step 3 to already exist). Open that URL in a browser — it's a static
-site (HTML + JS + JSON, via Plotly), so any static file server works
-equally well if you'd rather not use the provided script.
-
-The app has a collapsible left-hand menu (Introduction / General analysis /
-Habitat level, each with its own submenu) instead of a single scrolling
-page — click any item to jump straight to that view.
-
-
-**With this option, every command in Option B steps 1–5 below should be prefixed
-with `pixi run`**, e.g. `pixi run ./build_unigenes.py`, `pixi run
-./serve_webapp.sh` — or run `pixi shell` once to drop into a shell with the
-environment already active, then use the plain commands as written.
+Then prefix every command in steps 1–5 below with `pixi run`, e.g. `pixi
+run ./download_data.sh data_zenodo_github` — or run `pixi shell` once to
+drop into a shell with the environment already active, then use the plain
+commands exactly as written.
 
 ### Option B — install it yourself, no pixi
 
@@ -68,10 +56,10 @@ environment already active, then use the plain commands as written.
 pip install pandas numpy   # ideally inside a virtualenv, or: conda install pandas numpy
 ```
 
-**With this option, run every command in steps 1–5 below exactly as
-written**, no prefix needed.
+Then run every command in steps 1–5 below exactly as written, no prefix
+needed.
 
-#### 1. Download the raw data
+## 1. Download the raw data
 
 ```bash
 ./download_data.sh data_zenodo_github
@@ -90,7 +78,7 @@ abundance/richness (`abundance_richness.csv.gz`), per-gene abundance
 ./download_data.sh [destination_dir]   # destination_dir defaults to ./data
 ```
 
-#### 2. Build the unigenes table
+## 2. Build the unigenes table
 
 ```bash
 ./build_unigenes.py [data_dir] [output_tsv]
@@ -108,7 +96,7 @@ gene was reported as an ARG in at least one of 13 target habitats (human
 gut/oral/skin/nose/vagina, dog/cat/mouse/pig gut, wastewater, marine,
 freshwater, soil). Writes `unigenes.tsv` (~565k rows).
 
-#### 3. Build the web app data
+## 3. Build the web app data
 
 ```bash
 ./build_app_data.py [data_dir] [unigenes_tsv] [out_dir]
@@ -124,7 +112,7 @@ page's presence data, which comes from step 4 instead. Also writes
 `table_s3_full.csv.gz` (the full per-gene ARG table, offered as a direct
 download in the app).
 
-#### 4. Build the Pan-/Core-resistome presence data
+## 4. Build the Pan-/Core-resistome presence data
 
 ```bash
 ./build_core_pan_data.py [data_dir] [unigenes_tsv] [out_dir] [depth] [seed]
@@ -155,7 +143,7 @@ usual color; there's no seeded RNG, so re-running gives slightly different
 (but statistically equivalent) results each time, and there's no gene-list
 download from the page itself.
 
-#### 5. Run the web app
+## 5. Run the web app
 
 ```bash
 ./serve_webapp.sh
