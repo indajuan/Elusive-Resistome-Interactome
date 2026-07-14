@@ -8,7 +8,26 @@ const PLOTLY_LAYOUT_BASE = {
   margin: {t:30,l:60,r:20,b:70},
   colorway: ['#1d3557','#2a9d8f','#e76f51','#7c5cbf','#6a9c3f','#c9962e','#6b7c77']
 };
-const PLOTLY_CONFIG = {displaylogo:false, responsive:true, modeBarButtonsToRemove:['lasso2d','select2d']};
+function downloadButton(format){
+  const label = format.toUpperCase();
+  return {
+    name: `Download ${label}`,
+    title: `Download plot as ${label}`,
+    icon: {
+      width: 1000, height: 1000,
+      // camera glyph + format label so the two buttons are distinguishable
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">' +
+        '<path fill="currentColor" d="M500 450a170 170 0 100 340 170 170 0 000-340zm0 280a110 110 0 110-220 110 110 0 010 220z"/>' +
+        '<path fill="currentColor" d="M820 320H670l-40-70a40 40 0 00-34-20H404a40 40 0 00-34 20l-40 70H180a80 80 0 00-80 80v320a80 80 0 0080 80h640a80 80 0 0080-80V400a80 80 0 00-80-80zm20 400a20 20 0 01-20 20H180a20 20 0 01-20-20V400a20 20 0 0120-20h186l58-90h152l58 90h188a20 20 0 0120 20z"/>' +
+        `<text x="500" y="900" font-family="Inter, sans-serif" font-size="260" font-weight="700" text-anchor="middle" fill="currentColor">${label}</text>` +
+        '</svg>'
+    },
+    click: gd => Plotly.downloadImage(gd, {format, filename: gd.id || 'plot'})
+  };
+}
+const PLOTLY_CONFIG = {displaylogo:false, responsive:true,
+  modeBarButtonsToRemove:['lasso2d','select2d','toImage'],
+  modeBarButtonsToAdd:[downloadButton('png'), downloadButton('svg')]};
 
 function cleanLevel(s){
   if(!s) return s;
