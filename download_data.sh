@@ -6,11 +6,12 @@
 # Usage:
 #   ./download_data.sh [destination_dir]
 #
-# destination_dir defaults to ./data
+# destination_dir defaults to ./data_zenodo_github (matching the default
+# data_dir every other script in this project expects)
 
 set -euo pipefail
 
-DEST_DIR="${1:-data}"
+DEST_DIR="${1:-data_zenodo_github}"
 mkdir -p "$DEST_DIR"
 
 ZENODO_FILES=(

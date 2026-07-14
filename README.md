@@ -75,7 +75,7 @@ abundance/richness (`abundance_richness.csv.gz`), per-gene abundance
 (`reported_unigenes_as_ARG_per_habitat.csv`).
 
 ```bash
-./download_data.sh [destination_dir]   # destination_dir defaults to ./data
+./download_data.sh [destination_dir]   # destination_dir defaults to ./data_zenodo_github
 ```
 
 ## 2. Build the unigenes table
