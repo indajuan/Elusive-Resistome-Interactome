@@ -1741,11 +1741,14 @@ function renderPanCore(el, habitat, navKey){
 
   document.getElementById('pc-run-btn').addEventListener('click', async ()=>{
     const btn = document.getElementById('pc-run-btn');
+    const originalLabel = btn.innerHTML;
     btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Calculating…';
 
     const tools = toolSet();
     if(tools.length===0){
       btn.disabled = false;
+      btn.innerHTML = originalLabel;
       return;
     }
 
@@ -1790,8 +1793,10 @@ function renderPanCore(el, habitat, navKey){
         : `Genes present in ≥${p}% of a subsample's ${nEff} samples, in at least ${bigPInput.value}/${bigN} subsamples.`;
 
       btn.disabled = false;
+      btn.innerHTML = originalLabel;
     } catch(err){
       btn.disabled = false;
+      btn.innerHTML = originalLabel;
     }
   });
 }

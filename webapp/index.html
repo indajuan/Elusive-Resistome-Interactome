@@ -186,6 +186,13 @@
     background:var(--teal);color:#ffffff;border:none;border-radius:6px;padding:12px 22px;cursor:pointer;
   }
   .btn-primary:hover{opacity:.9;}
+  .btn-primary:disabled{opacity:.65;cursor:not-allowed;}
+  .spinner{
+    display:inline-block;width:13px;height:13px;margin-right:8px;vertical-align:-2px;
+    border:2px solid rgba(255,255,255,.4);border-top-color:#ffffff;border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
   .btn-secondary{
     font-family:'JetBrains Mono',monospace;font-size:13px;background:none;color:var(--ink-dim);
     border:1px solid var(--line);border-radius:6px;padding:12px 22px;cursor:pointer;
