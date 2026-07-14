@@ -28,12 +28,17 @@ their output).
 - Any modern browser (step 5) — Plotly is loaded from a CDN, so an internet
   connection is needed even though the app itself runs entirely client-side
 
-## 0. Set up the Python environment (recommended)
+## 0. Set up the Python environment
 
 The pipeline scripts (steps 2–4) need Python 3 with `pandas` and `numpy`.
-[pixi](https://pixi.sh) pins exact, reproducible versions of both (a
-`pixi.lock` file, like `package-lock.json`) so everyone running this gets
-the same environment, instead of relying on whatever's already on your
+Pick **one** of the two options below, then use the matching command style
+for every `./script.py` call in steps 2–4 further down.
+
+### Option A — pixi (reproducible, recommended)
+
+[pixi](https://pixi.sh) pins exact versions of `pandas`/`numpy` in a
+`pixi.lock` file (like `package-lock.json`), so everyone running this gets
+byte-identical package versions instead of whatever happens to be on their
 system.
 
 ```bash
@@ -43,27 +48,22 @@ pixi init
 pixi add python pandas numpy
 ```
 
-Then run any script through pixi so it uses that pinned environment:
+Commit `pixi.toml` and `pixi.lock` to the repo — anyone else cloning it
+just runs `pixi install` to reproduce the exact same environment.
+
+**With this option, every command in steps 1–5 below should be prefixed
+with `pixi run`**, e.g. `pixi run ./build_unigenes.py`, `pixi run
+./serve_webapp.sh` — or run `pixi shell` once to drop into a shell with the
+environment already active, then use the plain commands as written.
+
+### Option B — install it yourself, no pixi
 
 ```bash
-pixi run python build_unigenes.py
+pip install pandas numpy   # ideally inside a virtualenv, or: conda install pandas numpy
 ```
 
-or drop into a shell with the environment already active:
-
-```bash
-pixi shell
-python build_unigenes.py
-exit
-```
-
-Commit `pixi.toml` and `pixi.lock` to the repo; anyone else cloning it just
-runs `pixi install` to reproduce the exact same environment, no manual
-`pip install` needed.
-
-If you'd rather not install pixi, plain `pip install pandas numpy` (ideally
-inside a virtualenv) works too — pixi just makes the exact versions
-reproducible across machines.
+**With this option, run every command in steps 1–5 below exactly as
+written**, no prefix needed.
 
 ## 1. Download the raw data
 
