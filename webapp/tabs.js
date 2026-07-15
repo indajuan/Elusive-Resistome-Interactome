@@ -478,13 +478,20 @@ function renderIntroSection(el){
         <div class="card">
           <h3>Detection pipelines</h3>
           <p class="desc">Six core tools, each with its own reference database and calling logic.</p>
+          <p class="pipeline-group-label">Alignment-based</p>
           <ul class="plain">
-            <li>fARGene v0.1</li>
             <li>DeepARG v2</li>
-            <li>AMRFinderPlus v4.0.15</li>
             <li>RGI v6.0.3 (CARD v4.0.0)</li>
             <li>ResFinder v2.4.0</li>
             <li>ABRicate v1.0.1 (run against ARGANNOT, MEGARes, CARD, NCBI, ResFinder)</li>
+          </ul>
+          <p class="pipeline-group-label">HMMs-based</p>
+          <ul class="plain">
+            <li>fARGene v0.1</li>
+          </ul>
+          <p class="pipeline-group-label">Alignment- and HMMs-based</p>
+          <ul class="plain">
+            <li>AMRFinderPlus v4.0.15</li>
           </ul>
         </div>
       </div>
@@ -826,11 +833,11 @@ function renderAnalysisSection(el, habitat, navKey){
 
   renderFAQ(el, habitat ? [] : [
     {title: "Confusing lower bars for higher jumps",
-     text: "<ul><li>Despite RGI using 'perfect' and 'strict' thresholds, it reports only 10% of the ARGs with ≥80% identity level to the reference.</li><li>DeepARG reports only 15% the ARGs with ≥80% identity level to reference.</li><li>Does lowering sequence identity thresholds enable discovery of ARGs?</li><li>Would this strategy work for any gene class?</li></ul>"},
+     text: "<ul><li>Despite RGI using 'perfect' and 'strict' thresholds, it reports 90% of the ARGs with <80% identity level to the reference genes.</li><li>DeepARG reports 85% of the ARGs with <80% identity level to reference genes.</li><li>Does lowering sequence identity thresholds enable discovery of ARGs?</li><li>Would this strategy work for any gene class?</li></ul>"},
     {title: "Agree to disagree",
-     text: "The highest Jaccard index was observed between ResFinder and ABRicate-ResFinder (73%), and between ABRicate-CARD and ABRicate-MEGARes."},
+     text: "<ul><li>The highest Jaccard index was observed between ResFinder and ABRicate-ResFinder (73%), and between ABRicate-CARD and ABRicate-MEGARes.</li></ul>"},
     {title: "Same map, same road, different destination",
-     text: "ABRicate, compared to RGI, AMRFinderPlus, and ResFinder, shows different results."}
+     text: "<ul><li>ABRicate, compared to RGI, AMRFinderPlus, and ResFinder, shows different results.</li></ul>"}
   ]);
 }
 
@@ -1037,9 +1044,9 @@ function renderGeneClassesSection(el, habitat, navKey){
 
   renderFAQ(el, habitat ? [] : [
     {title: "Go with the outflow",
-     text: "<ul><li>DeepARG – 23,784 (58%) of the efflux pumps were labelled by the tool as 'multidrug', a category highlighted by the authors of the tool as an important technical challenge requiring manual curation.</li><li>DeepARG – 5,290 (13%) of the efflux pumps were labelled as “unclassified” with a median 'probability' of 98%.</li><li>RGI – There are significant difficulties in distinguishing between resistance-conferring pumps and homologs (<a href=\"https://doi.org/10.64898/2025.12.11.693720\" target=\"_blank\">Mukiri, K. M. et al., 2025</a>).</li></ul>"},
+     text: "<ul><li>DeepARG – 23,784 (58%) of the efflux pumps were labelled by the tool as 'multidrug', a category highlighted by the authors of the tool as an important technical challenge requiring manual curation.</li><li>DeepARG – 5,290 (13%) of the efflux pumps were labelled as <strong>“unclassified”</strong> with a median <strong>“probability”</strong> of 98%.</li><li>RGI – There are significant difficulties in distinguishing between resistance-conferring pumps and homologs (<a href=\"https://doi.org/10.64898/2025.12.11.693720\" target=\"_blank\">Mukiri, K. M. et al., 2025</a>).</li></ul>"},
     {title: "Blindly pointing",
-     text: "Resistance to rifampicin is usually conferred through point mutations in the universal bacterial gene <em>rpoB</em>, which encodes the RNA polymerase-𝛽-subunit. DeepARG reported <em>rpoB</em> genes as ARGs without checking for specific point mutations conferring resistance and with a median identity threshold of 54%."},
+     text: "<ul><li>Resistance to rifampicin is usually conferred through point mutations in the universal bacterial gene <em>rpoB</em>, which encodes the RNA polymerase-𝛽-subunit.</li><li>DeepARG reported <em>rpoB</em> genes as ARGs without checking for specific point mutations conferring resistance and with a median identity threshold of 54%.</li></ul>"},
     {title: "The Van-ishing Act",
      text: "<ul><li>35% of <em>van</em> genes reported by RGI are <em>vanY</em> — an accessory D,D-carboxypeptidase (not the core ligase) that only increases resistance once the ligase-driven cassette is already active; it is not alone sufficient for resistance.</li><li>32% of <em>van</em> genes reported by RGI are <em>vanW</em> – an accessory gene of unknown function.</li><li>23% of <em>van</em> genes reported by RGI are <em>vanT</em> — 99% are below 80% identity. The housekeeping and regulatory gene alanine racemase and <em>vanT</em> share high sequence similarity; <em>vanT</em> alone is not sufficient for resistance.</li></ul>"}
   ]);
@@ -1238,11 +1245,11 @@ function renderCSCSection(el, habitat, navKey){
 
   renderFAQ(el, habitat ? [] : [
     {title: "Confusing lower bars for longer jumps",
-     text: "Despite the large number of efflux pump and van genes, and the low identity level for those classes (and others), RGI and DeepARG did not extrapolate to report the genes that other pipelines reported."},
+     text: "<ul><li>Despite the large number of efflux pump and van genes, and the low identity level for those classes (and others), RGI and DeepARG did not extrapolate to report the genes that other pipelines reported.</li></ul>"},
     {title: "The long voyage starts in your known-walked neighborhood",
-     text: "fARGene was the most comprehensive pipeline for the gene classes included in this tool. fARGene reports most genes that other pipelines report, albeit efflux pump are limited to tetracycline efflux pumps."},
+     text: "<ul><li>fARGene was the most comprehensive pipeline for the gene classes included in this tool. fARGene reports most genes that other pipelines report, albeit efflux pump are limited to tetracycline efflux pumps.</li></ul>"},
     {title: "The apples that fall under and far from the tree",
-     text: "MEGARes reports the genes that ABRicate with the CARD, ResFinder, ARGANNOT, and NCBI datasets, as it is a compilation of them. DeepARG, despite having CARD as a reference under the construction of DeepARG-DB, does not manage to capture the genes that RGI nor ABRicate-CARD do."}
+     text: "<ul><li>MEGARes reports the genes that ABRicate with the CARD, ResFinder, ARGANNOT, and NCBI datasets, as it is a compilation of them.</li><li>DeepARG, despite having CARD as a reference under the construction of DeepARG-DB, does not manage to capture the genes that RGI nor ABRicate-CARD do.</li></ul>"}
   ]);
 }
 
