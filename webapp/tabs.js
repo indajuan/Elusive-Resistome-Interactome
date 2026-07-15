@@ -464,7 +464,7 @@ function renderIntroSection(el){
   el.innerHTML = `
     <h2>Antibiotic Resistance Gene Detection<br>on the Global Microbial Gene Catalog</h2>
     <p class="sub">Ten ARG-detection pipelines, run on the same underlying gene catalogue, disagree far more than you'd expect. This explorer lets you interact with the dataset behind
-      <em><a href="https://www.biorxiv.org/content/10.64898/2026.05.11.724158v1" target="_blank">"The elusive resistome: a global comparison reveals large discrepancies among detection pipelines"</a></em> (Inda-Díaz et al., bioRxiv 2026).</p>
+      <em><a href="https://www.biorxiv.org/content/10.64898/2026.05.11.724158v1" target="_blank">"The elusive resistome: a global comparison reveals large discrepancies among detection pipelines"</a></em> (Inda-Díaz et al., bioRxiv 2026). <a href="https://zenodo.org/records/19702877" target="_blank">Data accessibility Zenodo</a></p>
 
     <div class="intro-layout">
       <div class="intro-main">
@@ -504,9 +504,6 @@ function renderIntroSection(el){
         </div>
       </div>
     </div>
-
-    <p class="footnote">Data: <a href="https://www.biorxiv.org/content/10.64898/2026.05.11.724158v1" target="_blank">bioRxiv preprint</a> ·
-    <a href="https://zenodo.org/records/19702877" target="_blank">Zenodo data records</a>. Independent, unofficial rebuild of the companion Shiny app — not affiliated with the authors.</p>
 
     <div class="wizard-actions">
       <button class="btn-primary" id="intro-continue-btn">Continue to analysis →</button>
