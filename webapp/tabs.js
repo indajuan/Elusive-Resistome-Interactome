@@ -49,18 +49,27 @@ function plotToTSV(gd){
   const xAx = full.xaxis || {}, yAx = full.yaxis || {};
   const isHeat = traces.some(t => t.type === 'heatmap');
 
+  // Explicit column names set via layout.meta.tsv ({x, y, series, z}). This is a
+  // Plotly passthrough, so it never renders on the page or in image exports, letting
+  // us name TSV columns for axes we deliberately leave untitled.
+  const layoutIn = (gd && gd.layout) || {};
+  const tsvMeta = (layoutIn.meta && layoutIn.meta.tsv) || (full.meta && full.meta.tsv) || {};
+  // Read a visible axis/legend title, dropping Plotly's editable-mode placeholder
+  // ("Click to enter X axis title") that it injects for untitled axes.
+  const axisTitle = t => { const s = plotlyTitle(t); return /^Click to enter .* title$/.test(s) ? '' : s; };
+
   const used = new Set();
   const uniq = n => { const base = n || 'col'; let k = base, i = 2; while(used.has(k)) k = `${base}_${i++}`; used.add(k); return k; };
-  const sCol = named ? uniq(plotlyTitle(full.legend && full.legend.title) || 'series') : null;
+  const sCol = named ? uniq(tsvMeta.series || axisTitle(full.legend && full.legend.title) || 'series') : null;
   let xCol, yCol, zCol;
   if(isHeat){
-    xCol = uniq(plotlyTitle(xAx.title) || 'column');
-    yCol = uniq(plotlyTitle(yAx.title) || 'row');
+    xCol = uniq(tsvMeta.x || axisTitle(xAx.title) || 'column');
+    yCol = uniq(tsvMeta.y || axisTitle(yAx.title) || 'row');
     const heat = traces.find(t => t.type === 'heatmap');
-    zCol = uniq(plotlyTitle(heat.colorbar && heat.colorbar.title) || 'value');
+    zCol = uniq(tsvMeta.z || axisTitle(heat.colorbar && heat.colorbar.title) || 'value');
   } else {
-    xCol = uniq(plotlyTitle(xAx.title) || (xAx.type === 'category' ? 'label' : 'x'));
-    yCol = uniq(plotlyTitle(yAx.title) || (yAx.type === 'category' ? 'label' : 'y'));
+    xCol = uniq(tsvMeta.x || axisTitle(xAx.title) || (xAx.type === 'category' ? 'label' : 'x'));
+    yCol = uniq(tsvMeta.y || axisTitle(yAx.title) || (yAx.type === 'category' ? 'label' : 'y'));
   }
 
   const cols = [];
@@ -578,6 +587,7 @@ function plotCitations(rows, sourceLabel){
       hovertemplate:'%{y} — 2025\u201326: %{x:,}<extra></extra>'
     }
   ], {...PLOTLY_LAYOUT_BASE, barmode:'stack',
+    meta:{tsv:{series:'Period', y:'Tool', x:'Citations'}},
     height: 230, margin:{t:6,l:88,r:10,b:28},
     font:{...PLOTLY_LAYOUT_BASE.font, size:10.5},
     xaxis:{title:'', gridcolor:'#dde2de', tickfont:{size:9.5}, rangemode:'nonnegative'},
@@ -758,6 +768,7 @@ function renderAnalysisSection(el, habitat, navKey){
       marker:{color: rows.map(d=>DB_COLOR[d.tools_db]||'#1d3557'), line:{color:'#ffffff', width:1}},
       hovertemplate: '%{y}: %{x:,}<extra></extra>'
     }], {...PLOTLY_LAYOUT_BASE, height:h,
+         meta:{tsv:{y:'Tool'}},
          margin:{t:8,l:20,r:8,b:75},
          xaxis:{title:'Number of ARGs', gridcolor:'#dde2de', rangemode:'nonnegative'},
          yaxis:{automargin:true, autorange:'reversed', tickfont:{size:9.5}, tickangle:-45}}, PLOTLY_CONFIG);
@@ -780,6 +791,7 @@ function renderAnalysisSection(el, habitat, navKey){
       hovertemplate:'%{y} vs %{x}: %{z:.0%}<extra></extra>',
       colorbar:{tickformat:'.0%', thickness:10}
     }], {...PLOTLY_LAYOUT_BASE, height:h,
+         meta:{tsv:{x:'Tool', y:'Tool', z:'Jaccard similarity'}},
          margin:{t:8,l:20,r:8,b:75},
          xaxis:{tickangle:-90, automargin:true, tickfont:{size:8.5}},
          yaxis:{autorange:'reversed', automargin:true, tickfont:{size:9.5}, tickangle:-45}}, PLOTLY_CONFIG);
@@ -803,6 +815,7 @@ function renderAnalysisSection(el, habitat, navKey){
         };
       });
     plot(`${P}args-identity`, traces, {...PLOTLY_LAYOUT_BASE, height:h,
+      meta:{tsv:{series:'Tool'}},
       xaxis:{title:'Percent identity to reference', gridcolor:'#dde2de', rangemode:'nonnegative'},
       yaxis:{title:'Density', gridcolor:'#dde2de', rangemode:'nonnegative'},
       legend:{orientation:'h', y:-0.3}}, PLOTLY_CONFIG);
@@ -953,6 +966,7 @@ function renderGeneClassesSection(el, habitat, navKey){
       };
     });
     plot(`${P}identity-by-class`, traces, {...PLOTLY_LAYOUT_BASE, boxmode:'group',
+      meta:{tsv:{y:'Gene class', series:'Tool'}},
       height: Math.max(460, classes.length*42), margin:{t:10,l:20,r:8,b:95},
       xaxis:{title:'Percent identity', range:[0,102], gridcolor:'#dde2de', rangemode:'nonnegative'},
       yaxis:{automargin:true, autorange:'reversed', categoryorder:'array', categoryarray:classLabels, tickangle:-45, tickfont:{size:9.5}},
@@ -987,6 +1001,7 @@ function renderGeneClassesSection(el, habitat, navKey){
     }));
 
     plot(`${P}class-bar`, traces, {...PLOTLY_LAYOUT_BASE, barmode:'group',
+      meta:{tsv:{y:'Gene class', series:'Tool'}},
       height: Math.max(500, classes.length*70),
       margin:{t:50,l:20,r:20,b:60},
       shapes: dividers,
@@ -1010,6 +1025,7 @@ function renderGeneClassesSection(el, habitat, navKey){
       hovertemplate:'%{y} — %{x}: %{z:.1%}<extra></extra>',
       colorbar:{tickformat:'.0%', thickness:10}
     }], {...PLOTLY_LAYOUT_BASE, height: Math.max(460, classes.length*42),
+         meta:{tsv:{x:'Tool', y:'Gene class', z:'Proportion'}},
          margin:{t:10,l:20,r:8,b:95},
          xaxis:{tickangle:-90, automargin:true, tickfont:{size:9.5}},
          yaxis:{automargin:true, tickfont:{size:9.5}, autorange:'reversed', tickangle:-45}}, PLOTLY_CONFIG);
@@ -1158,6 +1174,7 @@ function renderCSCSection(el, habitat, navKey){
     const traces = [];
     const dividers = [];
     const layout = {...PLOTLY_LAYOUT_BASE,
+      meta:{tsv:{x:'CSC', y:'Gene class', series:'Reference tool'}},
       height: Math.max(480, classLabels.length*46),
       margin:{t:40,l:20,r:20,b:60},
       showlegend:false,
@@ -1375,6 +1392,7 @@ function renderAbundance(el, habitat, navKey){
     const jitter = DATA.abundance_jitter_sample.filter(d=>d.habitat===habitat);
     plot('ab-abundance-box', boxTrace(summary, jitter, 'abundance'),
       {...PLOTLY_LAYOUT_BASE, height:420, showlegend:false,
+       meta:{tsv:{x:'Tool'}},
        yaxis:{title:'Relative abundance (reads/million)', gridcolor:'#dde2de', rangemode:'nonnegative',
               range: zoomRange(summary, barToolSet())},
        xaxis:{tickangle:-45}}, PLOTLY_CONFIG);
@@ -1384,6 +1402,7 @@ function renderAbundance(el, habitat, navKey){
     const jitter = DATA.abundance_jitter_sample.filter(d=>d.habitat===habitat);
     plot('ab-richness-box', boxTrace(summary, jitter, 'richness'),
       {...PLOTLY_LAYOUT_BASE, height:420, showlegend:false,
+       meta:{tsv:{x:'Tool'}},
        yaxis:{title:'Richness', gridcolor:'#dde2de', rangemode:'nonnegative',
               range: zoomRange(summary, barToolSet())},
        xaxis:{tickangle:-45}}, PLOTLY_CONFIG);
@@ -1398,6 +1417,7 @@ function renderAbundance(el, habitat, navKey){
     const traces = [];
     const dividers = [];
     const layout = {...PLOTLY_LAYOUT_BASE,
+      meta:{tsv:{x:'Relative abundance', y:'Tool', series:'Tool'}},
       height: Math.max(320, tools.length*40),
       margin:{t:40,l:20,r:20,b:60},
       showlegend:false,
@@ -1704,6 +1724,7 @@ function renderPanCore(el, habitat, navKey){
       marker:{color: rows.map(r=>r.habitat===habitat ? '#e76f51' : '#8a9a95')},
       hovertemplate:'%{y}: %{x:,} samples<extra></extra>'
     }], {...PLOTLY_LAYOUT_BASE, height:240,
+      meta:{tsv:{y:'Habitat', x:'Number of samples'}},
       margin:{t:6,l:20,r:8,b:28},
       font:{...PLOTLY_LAYOUT_BASE.font, size:10},
       xaxis:{title:'', gridcolor:'#dde2de', rangemode:'nonnegative'},
@@ -1766,6 +1787,7 @@ function renderPanCore(el, habitat, navKey){
       marker:{color: rows.map(r=>DB_COLOR[TOOL_DB[r.tool]]||'#1d3557'), line:{color:'#ffffff', width:1}},
       hovertemplate:'%{y}: %{x:,}<extra></extra>'
     }], {...PLOTLY_LAYOUT_BASE, height: Math.max(160, rows.length*36),
+      meta:{tsv:{y:'Tool'}},
       margin:{t:8,l:20,r:8,b:40},
       xaxis:{title:'Number of genes', gridcolor:'#dde2de', rangemode:'nonnegative'},
       yaxis:{automargin:true, autorange:'reversed'}}, PLOTLY_CONFIG);
@@ -1887,7 +1909,7 @@ function renderOverlap(el){
       colorscale:[[0,'#eef0ee'],[1,'#1d3557']], zmin:0, zmax:1,
       hovertemplate:'%{y} — %{x}: %{z:.0%}<extra></extra>',
       colorbar:{tickformat:'.0%', thickness:14}
-    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(360, classes.length*30), xaxis:{tickangle:-45}, yaxis:{automargin:true}}, PLOTLY_CONFIG);
+    }], {...PLOTLY_LAYOUT_BASE, height: Math.max(360, classes.length*30), meta:{tsv:{x:'Tool', y:'Gene class', z:'CSC'}}, xaxis:{tickangle:-45}, yaxis:{automargin:true}}, PLOTLY_CONFIG);
 
     if(plotEl.removeAllListeners) plotEl.removeAllListeners('plotly_click');
     plotEl.on('plotly_click', function(evt){
@@ -1908,6 +1930,7 @@ function renderOverlap(el){
       marker:{color:'#2a9d8f'},
       hovertemplate:'vs %{y}: %{x:.0%}<extra></extra>'
     }], {...PLOTLY_LAYOUT_BASE, height: Math.max(260, rows.length*24),
+      meta:{tsv:{y:'Tool'}},
       xaxis:{title:'CSC', tickformat:'.0%', range:[0,1], gridcolor:'#dde2de', rangemode:'nonnegative'}, yaxis:{automargin:true}}, PLOTLY_CONFIG);
   }
 
