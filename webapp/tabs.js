@@ -273,18 +273,18 @@ function buildToolLookups(){
 }
 
 // ---------------------------------------------------------------------------
-// SIDE-MENU NAVIGATION: a persistent left sidebar (Intro / General analysis /
-// Habitat level, each with a submenu) replaces the old continuous-scroll
+// SIDE-MENU NAVIGATION: a persistent left sidebar (Intro / Global analysis /
+// By Habitat, each with a submenu) replaces the old continuous-scroll
 // wizard. Only one section is rendered into #content-inner at a time.
 // ---------------------------------------------------------------------------
 const NAV_TREE = [
   {key:'intro', label:'Introduction'},
-  {key:'general', label:'General analysis', children:[
-    {key:'general-args', label:'ARGs by Pipeline'},
-    {key:'general-geneclasses', label:'Gene Classes'},
-    {key:'general-csc', label:'Class-specific Coverage'},
+  {key:'global', label:'Global analysis', children:[
+    {key:'global-args', label:'ARGs by Pipeline'},
+    {key:'global-geneclasses', label:'Gene Classes'},
+    {key:'global-csc', label:'Class-specific Coverage'},
   ]},
-  {key:'habitat', label:'Habitat level', children:[
+  {key:'habitat', label:'By Habitat', children:[
     {key:'habitat-args', label:'ARGs by Pipeline'},
     {key:'habitat-geneclasses', label:'Gene Classes'},
     {key:'habitat-abundance', label:'Abundance & Richness'},
@@ -340,9 +340,9 @@ function renderFAQ(container, answers){
 
 const ROUTE_RENDER = {
   'intro': (el)=>renderIntroSection(el),
-  'general-args': (el,h,k)=>renderAnalysisSection(el, null, k),
-  'general-geneclasses': (el,h,k)=>renderGeneClassesSection(el, null, k),
-  'general-csc': (el,h,k)=>renderCSCSection(el, null, k),
+  'global-args': (el,h,k)=>renderAnalysisSection(el, null, k),
+  'global-geneclasses': (el,h,k)=>renderGeneClassesSection(el, null, k),
+  'global-csc': (el,h,k)=>renderCSCSection(el, null, k),
   'habitat-args': (el,h,k)=>renderAnalysisSection(el, h, k),
   'habitat-abundance': (el,h,k)=>renderAbundance(el, h, k),
   'habitat-geneclasses': (el,h,k)=>renderGeneClassesSection(el, h, k),
@@ -520,7 +520,7 @@ function renderIntroSection(el){
       <button class="btn-primary" id="intro-continue-btn">Continue to analysis →</button>
     </div>
   `;
-  document.getElementById('intro-continue-btn').addEventListener('click', ()=>navigateTo('general-args'));
+  document.getElementById('intro-continue-btn').addEventListener('click', ()=>navigateTo('global-args'));
 
   drawCitationsChart();
 }
